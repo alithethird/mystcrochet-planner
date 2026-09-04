@@ -1,0 +1,327 @@
+import 'package:flutter/material.dart';
+import '../models/motif.dart';
+import '../models/yarn_color.dart';
+import '../services/localization.dart';
+import 'motif_preview_widget.dart';
+
+class MotifDesignerDialog extends StatefulWidget {
+  final Motif? initialMotif;
+
+  const MotifDesignerDialog({super.key, this.initialMotif});
+
+  @override
+  State<MotifDesignerDialog> createState() => _MotifDesignerDialogState();
+}
+
+class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
+  late TextEditingController _nameController;
+  late MotifType _selectedType;
+  late List<YarnColor> _rounds;
+  int _activeRoundIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialMotif;
+    if (initial != null) {
+      _nameController = TextEditingController(text: initial.name);
+      _selectedType = initial.type;
+      _rounds = List.from(initial.rounds);
+    } else {
+      _nameController = TextEditingController(text: 'Özel Motif / Custom Motif');
+      _selectedType = MotifType.classicGranny;
+      _rounds = [
+        YarnColor.defaultPalette.firstWhere((c) => c.id == 'mustard'),
+        YarnColor.defaultPalette.firstWhere((c) => c.id == 'terracotta'),
+        YarnColor.defaultPalette.firstWhere((c) => c.id == 'sage'),
+        YarnColor.defaultPalette.firstWhere((c) => c.id == 'cream'),
+      ];
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Motif get _previewMotif => Motif(
+        id: widget.initialMotif?.id ?? 'temp_id',
+        name: _nameController.text.trim(),
+        type: _selectedType,
+        rounds: _rounds,
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640, maxHeight: 720),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    widget.initialMotif == null
+                        ? t('new_motif')
+                        : t('edit_motif'),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Motif Name
+                      TextField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: t('motif_name'),
+                          prefixIcon: const Icon(Icons.label_outline),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Motif Type selector
+                      Text(
+                        t('motif_type'),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedButton<MotifType>(
+                        segments: const [
+                          ButtonSegment(
+                            value: MotifType.classicGranny,
+                            label: Text('Klasik Granny'),
+                            icon: Icon(Icons.grid_3x3, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: MotifType.solidGranny,
+                            label: Text('Solid / Düz'),
+                            icon: Icon(Icons.crop_square, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: MotifType.sunburst,
+                            label: Text('Papatya / Sunburst'),
+                            icon: Icon(Icons.wb_sunny_outlined, size: 18),
+                          ),
+                        ],
+                        selected: {_selectedType},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            _selectedType = newSelection.first;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Live Preview & Round Selector Row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Live Preview Box
+                          Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE2DCD5)),
+                                ),
+                                child: MotifPreviewWidget(
+                                  motif: _previewMotif,
+                                  size: 130,
+                                  showShadow: true,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Canlı Önizleme',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF756A63),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Rounds Tab
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${t('round')} Seçimi',
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: List.generate(_rounds.length, (index) {
+                                    final isSelected = _activeRoundIndex == index;
+                                    final roundColor = _rounds[index].color;
+                                    return ChoiceChip(
+                                      label: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 14,
+                                            height: 14,
+                                            decoration: BoxDecoration(
+                                              color: roundColor,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.black26),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            index == 0
+                                                ? t('round_center')
+                                                : index == _rounds.length - 1
+                                                    ? t('round_border')
+                                                    : '${t('round')} ${index + 1}',
+                                          ),
+                                        ],
+                                      ),
+                                      selected: isSelected,
+                                      onSelected: (selected) {
+                                        if (selected) {
+                                          setState(() {
+                                            _activeRoundIndex = index;
+                                          });
+                                        }
+                                      },
+                                    );
+                                  }),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Seçili Tur: ${t('round')} ${_activeRoundIndex + 1} (${_rounds[_activeRoundIndex].name})',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFC86D51),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Palette Color Grid
+                      Text(
+                        t('select_color'),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: YarnColor.defaultPalette.map((yarn) {
+                          final isCurrent = _rounds[_activeRoundIndex] == yarn;
+                          return Tooltip(
+                            message: yarn.name,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _rounds[_activeRoundIndex] = yarn;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: yarn.color,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isCurrent
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Colors.black12,
+                                    width: isCurrent ? 3 : 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 2,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: isCurrent
+                                    ? Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: yarn.color.computeLuminance() > 0.5
+                                            ? Colors.black87
+                                            : Colors.white,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Bottom Action Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(t('cancel_btn')),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      final name = _nameController.text.trim();
+                      final motif = Motif(
+                        id: widget.initialMotif?.id ??
+                            'motif_${DateTime.now().millisecondsSinceEpoch}',
+                        name: name.isNotEmpty ? name : 'Granny Motif',
+                        type: _selectedType,
+                        rounds: _rounds,
+                      );
+                      Navigator.of(context).pop(motif);
+                    },
+                    child: Text(t('save_btn')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
