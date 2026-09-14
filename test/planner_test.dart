@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mystcrochet_planner/config/app_config.dart';
 import 'package:mystcrochet_planner/models/motif.dart';
 import 'package:mystcrochet_planner/models/project.dart';
 import 'package:mystcrochet_planner/models/yarn_color.dart';
 import 'package:mystcrochet_planner/providers/project_provider.dart';
+import 'package:mystcrochet_planner/services/image_cropper_service.dart';
 
 void main() {
   group('MystCrochet Models & Logic Tests', () {
@@ -159,6 +161,100 @@ void main() {
       expect(restored.type, sweater.type);
       expect(restored.sections.length, sweater.sections.length);
       expect(restored.motifs.length, sweater.motifs.length);
+    });
+
+    test('Photo motif serialization, deserialization, and copyWith', () {
+      const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      const photoMotif = Motif(
+        id: 'photo_1',
+        name: 'Gerçek Motifim',
+        type: MotifType.photo,
+        rounds: [],
+        photoBase64: sampleBase64,
+      );
+
+      final json = photoMotif.toJson();
+      expect(json['type'], 'photo');
+      expect(json['photoBase64'], sampleBase64);
+
+      final restored = Motif.fromJson(json);
+      expect(restored.id, 'photo_1');
+      expect(restored.type, MotifType.photo);
+      expect(restored.photoBase64, sampleBase64);
+      expect(restored.rounds, isEmpty);
+
+      final updated = photoMotif.copyWith(name: 'Gül Motifim');
+      expect(updated.name, 'Gül Motifim');
+      expect(updated.photoBase64, sampleBase64);
+    });
+
+    test('AppConfig resolution tiers and custom overrides', () {
+      // Standard resolution
+      AppConfig.isPremiumUser = false;
+      AppConfig.setCustomResolution(null);
+      expect(AppConfig.activePhotoResolution, 512);
+
+      // Premium resolution
+      AppConfig.isPremiumUser = true;
+      expect(AppConfig.activePhotoResolution, 1024);
+
+      // Custom resolution override
+      AppConfig.setCustomResolution(768);
+      expect(AppConfig.activePhotoResolution, 768);
+
+      // Reset
+      AppConfig.setCustomResolution(null);
+      AppConfig.isPremiumUser = false;
+      expect(AppConfig.activePhotoResolution, 512);
+    });
+
+    test('ImageCropperService getAutoCenterSquare calculations', () {
+      // Landscape: 1600x1200 -> 1200x1200 centered at (200, 0)
+      final rectLandscape = ImageCropperService.getAutoCenterSquare(1600, 1200);
+      expect(rectLandscape.left, 200.0);
+      expect(rectLandscape.top, 0.0);
+      expect(rectLandscape.width, 1200.0);
+      expect(rectLandscape.height, 1200.0);
+
+      // Portrait: 1080x1920 -> 1080x1080 centered at (0, 420)
+      final rectPortrait = ImageCropperService.getAutoCenterSquare(1080, 1920);
+      expect(rectPortrait.left, 0.0);
+      expect(rectPortrait.top, 420.0);
+      expect(rectPortrait.width, 1080.0);
+      expect(rectPortrait.height, 1080.0);
+    });
+
+    test('Project with Photo motif painting, tally, and JSON export', () {
+      final provider = ProjectProvider();
+      final blanket = CrochetProject.createBlanket(rows: 2, cols: 2);
+      provider.setProject(blanket);
+
+      const sampleBase64 = 'dGVzdF9waG90b19kYXRh';
+      const photoMotif = Motif(
+        id: 'photo_test_1',
+        name: 'El Emeği Motif',
+        type: MotifType.photo,
+        photoBase64: sampleBase64,
+      );
+
+      provider.addMotif(photoMotif);
+      expect(provider.project?.motifs.any((m) => m.id == 'photo_test_1'), isTrue);
+
+      // Select and paint with photo motif
+      provider.selectMotif('photo_test_1');
+      provider.updateSlot(0, 0);
+      provider.updateSlot(1, 1);
+
+      expect(provider.project?.totalFilledSquares, 2);
+      final tally = provider.getMotifCounts();
+      expect(tally['photo_test_1'], 2);
+
+      // Verify JSON round-trip retains photoBase64
+      final json = provider.project!.toJson();
+      final restored = CrochetProject.fromJson(json);
+      final restoredPhotoMotif = restored.motifs.firstWhere((m) => m.id == 'photo_test_1');
+      expect(restoredPhotoMotif.photoBase64, sampleBase64);
+      expect(restoredPhotoMotif.type, MotifType.photo);
     });
   });
 }

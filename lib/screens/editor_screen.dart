@@ -11,6 +11,9 @@ import '../widgets/canvas_grid_widget.dart';
 import '../widgets/motif_designer_dialog.dart';
 import '../widgets/motif_preview_widget.dart';
 import '../widgets/tally_drawer_widget.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/image_cropper_service.dart';
+import '../widgets/photo_crop_dialog.dart';
 
 class EditorScreen extends StatefulWidget {
   final ProjectProvider projectProvider;
@@ -81,6 +84,11 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _openMotifDesigner({Motif? motifToEdit}) async {
+    if (motifToEdit != null && motifToEdit.type == MotifType.photo) {
+      _editPhotoMotif(motifToEdit);
+      return;
+    }
+
     final result = await showDialog<Motif>(
       context: context,
       builder: (_) => MotifDesignerDialog(initialMotif: motifToEdit),
@@ -92,6 +100,100 @@ class _EditorScreenState extends State<EditorScreen> {
       } else {
         widget.projectProvider.addMotif(result);
       }
+    }
+  }
+
+  void _editPhotoMotif(Motif motif) async {
+    final nameController = TextEditingController(text: motif.name);
+    final updated = await showDialog<Motif>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('edit_motif')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MotifPreviewWidget(motif: motif, size: 90, showShadow: false),
+            const SizedBox(height: 16),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: t('motif_name')),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t('cancel_btn')),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop(motif.copyWith(name: nameController.text.trim()));
+            },
+            child: Text(t('save_btn')),
+          ),
+        ],
+      ),
+    );
+
+    if (updated != null) {
+      widget.projectProvider.updateMotif(updated);
+    }
+  }
+
+  void _openPhotoUploadFlow({ImageSource? source}) async {
+    ImageSource? selectedSource = source;
+    selectedSource ??= await showModalBottomSheet<ImageSource>(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  t('upload_photo'),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFBE8E2),
+                    child: Icon(Icons.camera_alt, color: AppColors.primary),
+                  ),
+                  title: Text(t('take_photo')),
+                  onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFE8EFE9),
+                    child: Icon(Icons.photo_library, color: AppColors.secondary),
+                  ),
+                  title: Text(t('pick_gallery')),
+                  onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+    if (selectedSource == null) return;
+
+    final bytes = await ImageCropperService.pickImageBytes(source: selectedSource);
+    if (bytes == null) return;
+
+    if (!mounted) return;
+
+    final result = await showDialog<Motif>(
+      context: context,
+      builder: (_) => PhotoCropDialog(imageBytes: bytes),
+    );
+
+    if (result != null) {
+      widget.projectProvider.addMotif(result);
     }
   }
 
@@ -433,6 +535,39 @@ class _EditorScreenState extends State<EditorScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Upload / Take Photo Motif Button
+                  InkWell(
+                    onTap: () => _openPhotoUploadFlow(),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      height: 56,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8EFE9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF7A9A83),
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.add_a_photo_outlined, color: AppColors.secondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            t('upload_photo'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: AppColors.secondary,
                             ),
                           ),
                         ],

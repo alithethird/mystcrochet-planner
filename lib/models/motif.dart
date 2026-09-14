@@ -4,6 +4,7 @@ enum MotifType {
   classicGranny,
   solidGranny,
   sunburst,
+  photo,
 }
 
 extension MotifTypeExtension on MotifType {
@@ -15,6 +16,8 @@ extension MotifTypeExtension on MotifType {
         return 'Düz / Solid Granny';
       case MotifType.sunburst:
         return 'Papatya / Sunburst';
+      case MotifType.photo:
+        return 'Fotoğraflı Motif / Photo Square';
     }
   }
 
@@ -33,12 +36,14 @@ class Motif {
   final String name;
   final MotifType type;
   final List<YarnColor> rounds;
+  final String? photoBase64;
 
   const Motif({
     required this.id,
     required this.name,
     required this.type,
-    required this.rounds,
+    this.rounds = const [],
+    this.photoBase64,
   });
 
   Motif copyWith({
@@ -46,12 +51,15 @@ class Motif {
     String? name,
     MotifType? type,
     List<YarnColor>? rounds,
+    String? photoBase64,
+    bool clearPhoto = false,
   }) {
     return Motif(
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
       rounds: rounds ?? List.from(this.rounds),
+      photoBase64: clearPhoto ? null : (photoBase64 ?? this.photoBase64),
     );
   }
 
@@ -60,15 +68,19 @@ class Motif {
         'name': name,
         'type': type.key,
         'rounds': rounds.map((r) => r.toJson()).toList(),
+        if (photoBase64 != null) 'photoBase64': photoBase64,
       };
 
   factory Motif.fromJson(Map<String, dynamic> json) => Motif(
         id: json['id'] as String,
         name: json['name'] as String,
         type: MotifTypeExtension.fromKey(json['type'] as String),
-        rounds: (json['rounds'] as List<dynamic>)
-            .map((r) => YarnColor.fromJson(r as Map<String, dynamic>))
-            .toList(),
+        rounds: json['rounds'] != null
+            ? (json['rounds'] as List<dynamic>)
+                .map((r) => YarnColor.fromJson(r as Map<String, dynamic>))
+                .toList()
+            : [],
+        photoBase64: json['photoBase64'] as String?,
       );
 
   /// Sample starter motifs for every new project

@@ -1,13 +1,8 @@
 services:
   mystcrochet-planner:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: mystcrochet-planner:latest
+    image: forgejo.home/ali/mystcrochet-planner:latest
     container_name: mystcrochet-planner
     restart: unless-stopped
     ports:
-      - "${PORT:-8081}:80"
-    volumes:
-      - ./build/web:/usr/share/nginx/html:ro
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - "8051:80"    # (Diğer uygulama 8050'de olduğu için buna boş olan 8051 portunu verelim)
+

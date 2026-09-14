@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/motif.dart';
@@ -43,10 +44,18 @@ class MotifPreviewWidget extends StatelessWidget {
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: CustomPaint(
-        size: Size(size, size),
-        painter: _GrannySquarePainter(motif: motif),
-      ),
+      child: motif.type == MotifType.photo && motif.photoBase64 != null
+          ? Image.memory(
+              base64Decode(motif.photoBase64!),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
+            )
+          : CustomPaint(
+              size: Size(size, size),
+              painter: _GrannySquarePainter(motif: motif),
+            ),
     );
 
     if (onTap != null) {
@@ -85,6 +94,8 @@ class _GrannySquarePainter extends CustomPainter {
         break;
       case MotifType.sunburst:
         _paintSunburst(canvas, size, center, totalRounds);
+        break;
+      case MotifType.photo:
         break;
     }
   }

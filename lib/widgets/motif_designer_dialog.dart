@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/motif.dart';
 import '../models/yarn_color.dart';
+import '../services/image_cropper_service.dart';
 import '../services/localization.dart';
+import '../theme/app_theme.dart';
 import 'motif_preview_widget.dart';
+import 'photo_crop_dialog.dart';
 
 class MotifDesignerDialog extends StatefulWidget {
   final Motif? initialMotif;
@@ -43,6 +47,67 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhotoFromDesigner() async {
+    final selectedSource = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                t('upload_photo'),
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFBE8E2),
+                  child: Icon(Icons.camera_alt, color: AppColors.primary),
+                ),
+                title: Text(t('take_photo')),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE8EFE9),
+                  child: Icon(Icons.photo_library, color: AppColors.secondary),
+                ),
+                title: Text(t('pick_gallery')),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (selectedSource == null) return;
+
+    final bytes = await ImageCropperService.pickImageBytes(source: selectedSource);
+    if (bytes == null) return;
+
+    if (!mounted) return;
+
+    final result = await showDialog<Motif>(
+      context: context,
+      builder: (_) => PhotoCropDialog(
+        imageBytes: bytes,
+        initialName: _nameController.text.trim().isNotEmpty
+            ? _nameController.text.trim()
+            : null,
+      ),
+    );
+
+    if (result != null && mounted) {
+      Navigator.of(context).pop(result);
+    }
   }
 
   Motif get _previewMotif => Motif(
@@ -131,6 +196,43 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
                             _selectedType = newSelection.first;
                           });
                         },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Option to upload/crop real photo
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8EFE9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF7A9A83)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.camera_alt_outlined, color: AppColors.secondary, size: 22),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Kendi ördüğünüz gerçek motifin fotoğrafını kullanmak ister misiniz?',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2C2523),
+                                ),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.secondary,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: _pickPhotoFromDesigner,
+                              icon: const Icon(Icons.upload, size: 15),
+                              label: Text(t('upload_photo')),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 20),
 

@@ -95,6 +95,17 @@ class LocalizationService extends ChangeNotifier {
     'quick_size_baby': 'Bebek Battaniyesi (5x6)',
     'quick_size_throw': 'Koltuk Şalı (6x8)',
     'quick_size_queen': 'Büyük Boy (8x10)',
+    'upload_photo': 'Fotoğraf Çek / Yükle',
+    'take_photo': 'Kamerayla Çek',
+    'pick_gallery': 'Galeriden / Dosyadan Seç',
+    'photo_square': 'Fotoğraflı Motif',
+    'crop_title': 'Motifi Kırp & Hizala',
+    'crop_instructions': 'Motifi 1:1 kareye hizalayın. Kaydırabilir, yakınlaştırabilir ve döndürebilirsiniz.',
+    'rotate_btn': 'Döndür (90°)',
+    'zoom_label': 'Yakınlaştır',
+    'crop_confirm': 'Kırp ve Motifi Kaydet',
+    'photo_motif_name_default': 'Gerçek Motifim',
+    'photo_loading_error': 'Fotoğraf yüklenirken bir hata oluştu.',
   };
 
   static const Map<String, String> _enMap = {
@@ -159,6 +170,17 @@ class LocalizationService extends ChangeNotifier {
     'quick_size_baby': 'Baby Blanket (5x6)',
     'quick_size_throw': 'Throw Blanket (6x8)',
     'quick_size_queen': 'Large Bedspread (8x10)',
+    'upload_photo': 'Take / Upload Photo',
+    'take_photo': 'Take with Camera',
+    'pick_gallery': 'Choose from Gallery / Files',
+    'photo_square': 'Photo Square',
+    'crop_title': 'Crop & Align Motif',
+    'crop_instructions': 'Align your square within the 1:1 box. Pan, zoom, and rotate as needed.',
+    'rotate_btn': 'Rotate (90°)',
+    'zoom_label': 'Zoom',
+    'crop_confirm': 'Crop and Save Motif',
+    'photo_motif_name_default': 'My Real Square',
+    'photo_loading_error': 'Failed to load photo.',
   };
 }
 
