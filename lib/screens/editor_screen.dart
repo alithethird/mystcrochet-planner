@@ -14,6 +14,7 @@ import '../widgets/tally_drawer_widget.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/image_cropper_service.dart';
 import '../widgets/photo_crop_dialog.dart';
+import '../widgets/personal_library_dialog.dart';
 import '../widgets/language_selector.dart';
 import '../widgets/sweater_dimensions_dialog.dart';
 
@@ -634,6 +635,42 @@ class _EditorScreenState extends State<EditorScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               color: AppColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Personal Library Button
+                  InkWell(
+                    onTap: () => PersonalLibraryDialog.show(
+                      context,
+                      projectProvider: widget.projectProvider,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      height: 56,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3EDF7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFC7B3D6),
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.photo_library_outlined, color: Color(0xFF6B4A8E)),
+                          const SizedBox(width: 6),
+                          Text(
+                            t('library_btn'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF6B4A8E),
                             ),
                           ),
                         ],

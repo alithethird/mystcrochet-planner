@@ -5,6 +5,7 @@ import '../services/localization.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/personal_library_dialog.dart';
 import '../widgets/sweater_dimensions_dialog.dart';
 import 'editor_screen.dart';
 
@@ -334,6 +335,18 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: EdgeInsets.only(right: 12),
             child: Center(
               child: LanguageSelector(),
+            ),
+          ),
+          // Personal Library button
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              onPressed: () => PersonalLibraryDialog.show(
+                context,
+                projectProvider: widget.projectProvider,
+              ),
+              icon: const Icon(Icons.photo_library_outlined, size: 18),
+              label: Text(t('library_btn')),
             ),
           ),
           // Import JSON button

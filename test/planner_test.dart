@@ -7,6 +7,8 @@ import 'package:mystcrochet_planner/models/yarn_color.dart';
 import 'package:mystcrochet_planner/providers/project_provider.dart';
 import 'package:mystcrochet_planner/services/image_cropper_service.dart';
 import 'package:mystcrochet_planner/services/localization.dart';
+import 'package:mystcrochet_planner/services/storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('MystCrochet Models & Logic Tests', () {
@@ -447,6 +449,112 @@ void main() {
       expect(json['squareSizeCm'], 11.5);
       final restored = CrochetProject.fromJson(json);
       expect(restored.squareSizeCm, 11.5);
+    });
+
+    test('Personal Motif Library storage CRUD operations', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      // 1. Initial load should be empty
+      final initialList = await StorageService.loadPersonalMotifs();
+      expect(initialList, isEmpty);
+
+      // 2. Save personal photo motifs
+      const photo1 = Motif(
+        id: 'user_sq_1',
+        name: 'Benim İlk Motifim',
+        type: MotifType.photo,
+        photoBase64: 'base64_square_1',
+      );
+      const photo2 = Motif(
+        id: 'user_sq_2',
+        name: 'Çiçekli Motif',
+        type: MotifType.photo,
+        photoBase64: 'base64_square_2',
+      );
+
+      await StorageService.savePersonalMotif(photo1);
+      await StorageService.savePersonalMotif(photo2);
+
+      final listAfterSave = await StorageService.loadPersonalMotifs();
+      expect(listAfterSave.length, 2);
+      expect(listAfterSave.any((m) => m.id == 'user_sq_1'), isTrue);
+      expect(listAfterSave.any((m) => m.id == 'user_sq_2'), isTrue);
+
+      // 3. Update an existing motif in library
+      final updatedPhoto1 = photo1.copyWith(name: 'Güneş Motifi (Güncellendi)');
+      await StorageService.savePersonalMotif(updatedPhoto1);
+
+      final listAfterUpdate = await StorageService.loadPersonalMotifs();
+      expect(listAfterUpdate.length, 2);
+      final found = listAfterUpdate.firstWhere((m) => m.id == 'user_sq_1');
+      expect(found.name, 'Güneş Motifi (Güncellendi)');
+      expect(found.photoBase64, 'base64_square_1');
+
+      // 4. Delete motif from library
+      await StorageService.deletePersonalMotif('user_sq_2');
+      final listAfterDelete = await StorageService.loadPersonalMotifs();
+      expect(listAfterDelete.length, 1);
+      expect(listAfterDelete.first.id, 'user_sq_1');
+      expect(listAfterDelete.any((m) => m.id == 'user_sq_2'), isFalse);
+    });
+
+    test('Importing motif from Personal Library into active CrochetProject', () async {
+      SharedPreferences.setMockInitialValues({});
+      const libMotif = Motif(
+        id: 'pers_sq_42',
+        name: 'Kütüphaneden Kare',
+        type: MotifType.photo,
+        photoBase64: 'kare_base64_data',
+      );
+      await StorageService.savePersonalMotif(libMotif);
+
+      final provider = ProjectProvider();
+      final blanket = CrochetProject.createBlanket(rows: 2, cols: 2);
+      provider.setProject(blanket);
+
+      expect(provider.project!.motifs.any((m) => m.id == 'pers_sq_42'), isFalse);
+
+      // Add to project
+      provider.addMotif(libMotif);
+      provider.selectMotif(libMotif.id);
+
+      expect(provider.project!.motifs.any((m) => m.id == 'pers_sq_42'), isTrue);
+      expect(provider.activeMotifId, 'pers_sq_42');
+
+      // Paint canvas slot
+      provider.updateSlot(0, 0);
+      expect(provider.currentSection!.slotAt(0, 0)?.motifId, 'pers_sq_42');
+      expect(provider.getMotifCounts()['pers_sq_42'], 1);
+    });
+
+    test('Personal Library localization strings exist in all languages', () {
+      final loc = LocalizationService();
+      const keys = [
+        'personal_library',
+        'save_to_personal_library',
+        'saved_to_personal_library',
+        'add_to_project',
+        'already_in_project',
+        'added_to_project',
+        'empty_personal_library',
+        'empty_personal_library_hint',
+        'delete_motif_confirm',
+        'library_btn',
+        'upload_new_to_library',
+        'square_count',
+      ];
+
+      for (final lang in AppLanguage.values) {
+        loc.setLanguage(lang);
+        for (final key in keys) {
+          final translation = loc.tr(key);
+          expect(translation, isNotEmpty, reason: '$key translation should not be empty for $lang');
+          expect(translation, isNot(equals(key)), reason: '$key missing translation in $lang');
+        }
+      }
+
+      // Reset to Turkish
+      loc.setLanguage(AppLanguage.tr);
     });
   });
 }

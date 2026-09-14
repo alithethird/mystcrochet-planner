@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import '../config/app_config.dart';
 import '../models/motif.dart';
 import '../services/localization.dart';
+import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 
 class PhotoCropDialog extends StatefulWidget {
@@ -32,6 +33,7 @@ class _PhotoCropDialogState extends State<PhotoCropDialog> {
   double _zoom = 1.0;
   Offset _panOffset = Offset.zero;
   bool _isProcessing = false;
+  bool _saveToLibrary = true;
 
   static const double _viewportSize = 280.0;
 
@@ -103,6 +105,10 @@ class _PhotoCropDialogState extends State<PhotoCropDialog> {
         rounds: const [],
         photoBase64: base64String,
       );
+
+      if (_saveToLibrary) {
+        await StorageService.savePersonalMotif(motif);
+      }
 
       if (mounted) {
         Navigator.of(context).pop(motif);
@@ -178,7 +184,41 @@ class _PhotoCropDialogState extends State<PhotoCropDialog> {
                   isDense: true,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+
+              // Save to library toggle
+              InkWell(
+                onTap: () => setState(() => _saveToLibrary = !_saveToLibrary),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: _saveToLibrary,
+                          onChanged: (val) =>
+                              setState(() => _saveToLibrary = val ?? true),
+                          activeColor: AppColors.primary,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        t('save_to_personal_library'),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
 
               // Interactive 1:1 Crop Viewport
               Expanded(

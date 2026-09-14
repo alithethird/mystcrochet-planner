@@ -4,6 +4,7 @@ import '../models/motif.dart';
 import '../models/yarn_color.dart';
 import '../services/image_cropper_service.dart';
 import '../services/localization.dart';
+import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import 'motif_preview_widget.dart';
 import 'photo_crop_dialog.dart';
@@ -107,6 +108,55 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
 
     if (result != null && mounted) {
       Navigator.of(context).pop(result);
+    }
+  }
+
+  Future<void> _pickFromPersonalLibrary() async {
+    final list = await StorageService.loadPersonalMotifs();
+    if (!mounted) return;
+
+    if (list.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t('empty_personal_library')),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final chosen = await showDialog<Motif>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('personal_library')),
+        content: SizedBox(
+          width: 400,
+          height: 350,
+          child: ListView.separated(
+            itemCount: list.length,
+            separatorBuilder: (_, _) => const Divider(),
+            itemBuilder: (ctx, i) {
+              final m = list[i];
+              return ListTile(
+                leading: MotifPreviewWidget(motif: m, size: 40, showShadow: false),
+                title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () => Navigator.of(ctx).pop(m),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t('cancel_btn')),
+          ),
+        ],
+      ),
+    );
+
+    if (chosen != null && mounted) {
+      Navigator.of(context).pop(chosen);
     }
   }
 
@@ -221,15 +271,30 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
                                 ),
                               ),
                             ),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.secondary,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                              ),
-                              onPressed: _pickPhotoFromDesigner,
-                              icon: const Icon(Icons.upload, size: 15),
-                              label: Text(t('upload_photo')),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: _pickFromPersonalLibrary,
+                                  icon: const Icon(Icons.photo_library_outlined, size: 15),
+                                  label: Text(t('library_btn')),
+                                ),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.secondary,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: _pickPhotoFromDesigner,
+                                  icon: const Icon(Icons.upload, size: 15),
+                                  label: Text(t('upload_photo')),
+                                ),
+                              ],
                             ),
                           ],
                         ),

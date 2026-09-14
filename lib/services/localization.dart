@@ -168,6 +168,18 @@ class LocalizationService extends ChangeNotifier {
     'squares_count': 'Kare',
     'each_section': 'her biri',
     'total_motifs_needed': 'Toplam İhtiyaç',
+    'personal_library': 'Kişisel Kare Kütüphanem',
+    'save_to_personal_library': 'Kişisel kütüphaneme kaydet',
+    'saved_to_personal_library': 'Kişisel kütüphaneye kaydedildi',
+    'add_to_project': 'Projeye Ekle',
+    'already_in_project': 'Bu motif zaten projede var',
+    'added_to_project': 'Motif projeye eklendi',
+    'empty_personal_library': 'Henüz kütüphanenizde kayıtlı fotoğraf karesi yok.',
+    'empty_personal_library_hint': 'Ördüğünüz karelerin fotoğraflarını çekip buraya kaydedebilir, dilediğiniz projede tekrar kullanabilirsiniz.',
+    'delete_motif_confirm': 'Bu motifi kütüphanenizden silmek istediğinize emin misiniz?',
+    'library_btn': 'Kütüphanem',
+    'upload_new_to_library': 'Kütüphaneye Yeni Kare Ekle',
+    'square_count': 'kare kayıtlı',
   };
 
   static const Map<String, String> _enMap = {
@@ -262,6 +274,18 @@ class LocalizationService extends ChangeNotifier {
     'squares_count': 'Squares',
     'each_section': 'each',
     'total_motifs_needed': 'Total Required',
+    'personal_library': 'My Square Library',
+    'save_to_personal_library': 'Save to my square library',
+    'saved_to_personal_library': 'Saved to personal square library',
+    'add_to_project': 'Add to Project',
+    'already_in_project': 'This motif is already in your project',
+    'added_to_project': 'Motif added to project',
+    'empty_personal_library': 'No photo squares saved in your library yet.',
+    'empty_personal_library_hint': 'Take photos of your crocheted squares and save them here to reuse them across all your projects.',
+    'delete_motif_confirm': 'Are you sure you want to delete this square from your library?',
+    'library_btn': 'My Library',
+    'upload_new_to_library': 'Add New Square to Library',
+    'square_count': 'squares saved',
   };
 
   static const Map<String, String> _deMap = {
@@ -356,6 +380,18 @@ class LocalizationService extends ChangeNotifier {
     'squares_count': 'Quadrate',
     'each_section': 'jeweils',
     'total_motifs_needed': 'Gesamtbedarf',
+    'personal_library': 'Meine Quadrat-Bibliothek',
+    'save_to_personal_library': 'In meiner Quadrat-Bibliothek speichern',
+    'saved_to_personal_library': 'In persönlicher Bibliothek gespeichert',
+    'add_to_project': 'Zum Projekt hinzufügen',
+    'already_in_project': 'Dieses Motiv ist bereits im Projekt',
+    'added_to_project': 'Motiv zum Projekt hinzugefügt',
+    'empty_personal_library': 'Noch keine Foto-Quadrate in Ihrer Bibliothek gespeichert.',
+    'empty_personal_library_hint': 'Fotografieren Sie Ihre gehäkelten Quadrate und speichern Sie sie hier, um sie in all Ihren Projekten wiederzuverwenden.',
+    'delete_motif_confirm': 'Möchten Sie dieses Quadrat wirklich aus Ihrer Bibliothek löschen?',
+    'library_btn': 'Meine Bibliothek',
+    'upload_new_to_library': 'Neues Quadrat zur Bibliothek hinzufügen',
+    'square_count': 'Quadrate gespeichert',
   };
 
   static const Map<String, String> _esMap = {
@@ -450,6 +486,18 @@ class LocalizationService extends ChangeNotifier {
     'squares_count': 'Cuadrados',
     'each_section': 'cada uno',
     'total_motifs_needed': 'Total Necesario',
+    'personal_library': 'Mi Biblioteca de Cuadrados',
+    'save_to_personal_library': 'Guardar en mi biblioteca de cuadrados',
+    'saved_to_personal_library': 'Guardado en la biblioteca personal',
+    'add_to_project': 'Añadir al Proyecto',
+    'already_in_project': 'Este motivo ya está en tu proyecto',
+    'added_to_project': 'Motivo añadido al proyecto',
+    'empty_personal_library': 'Aún no hay cuadrados con foto guardados en tu biblioteca.',
+    'empty_personal_library_hint': 'Toma fotos de tus cuadrados tejidos y guárdalos aquí para reutilizarlos en todos tus proyectos.',
+    'delete_motif_confirm': '¿Estás seguro de que deseas eliminar este cuadrado de tu biblioteca?',
+    'library_btn': 'Mi Biblioteca',
+    'upload_new_to_library': 'Añadir Nuevo Cuadrado a la Biblioteca',
+    'square_count': 'cuadrados guardados',
   };
 }
 
