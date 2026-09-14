@@ -208,9 +208,9 @@ class TallyDrawerWidget extends StatelessWidget {
 
                 // Section Breakdown (if more than 1 section)
                 if (project.sections.length > 1) ...[
-                  const Text(
-                    'Parça Bazında Dağılım',
-                    style: TextStyle(
+                  Text(
+                    t('section_breakdown'),
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF2C2523),
@@ -235,7 +235,7 @@ class TallyDrawerWidget extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            sec.name,
+                            sec.localizedName,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,

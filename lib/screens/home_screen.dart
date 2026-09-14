@@ -4,6 +4,7 @@ import '../providers/project_provider.dart';
 import '../services/localization.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_selector.dart';
 import 'editor_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -319,8 +320,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = LocalizationService();
-
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -355,16 +354,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          // Language Switcher Button
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: OutlinedButton.icon(
-              onPressed: () {
-                loc.toggleLanguage();
-                setState(() {});
-              },
-              icon: const Icon(Icons.language, size: 18),
-              label: Text(loc.isTr ? 'TR ➔ EN' : 'EN ➔ TR'),
+          // Language Selector
+          const Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Center(
+              child: LanguageSelector(),
             ),
           ),
           // Import JSON button

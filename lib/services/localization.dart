@@ -3,6 +3,40 @@ import 'package:flutter/foundation.dart';
 enum AppLanguage {
   tr,
   en,
+  de,
+  es,
+}
+
+extension AppLanguageExtension on AppLanguage {
+  String get code => name;
+
+  String get label {
+    switch (this) {
+      case AppLanguage.tr:
+        return 'Türkçe';
+      case AppLanguage.en:
+        return 'English';
+      case AppLanguage.de:
+        return 'Deutsch';
+      case AppLanguage.es:
+        return 'Español';
+    }
+  }
+
+  String get flag {
+    switch (this) {
+      case AppLanguage.tr:
+        return '🇹🇷';
+      case AppLanguage.en:
+        return '🇬🇧';
+      case AppLanguage.de:
+        return '🇩🇪';
+      case AppLanguage.es:
+        return '🇪🇸';
+    }
+  }
+
+  String get shortName => name.toUpperCase();
 }
 
 class LocalizationService extends ChangeNotifier {
@@ -16,9 +50,13 @@ class LocalizationService extends ChangeNotifier {
   bool get isTr => _currentLanguage == AppLanguage.tr;
 
   void toggleLanguage() {
-    _currentLanguage =
-        _currentLanguage == AppLanguage.tr ? AppLanguage.en : AppLanguage.tr;
-    notifyListeners();
+    cycleLanguage();
+  }
+
+  void cycleLanguage() {
+    final values = AppLanguage.values;
+    final nextIndex = (values.indexOf(_currentLanguage) + 1) % values.length;
+    setLanguage(values[nextIndex]);
   }
 
   void setLanguage(AppLanguage lang) {
@@ -29,8 +67,13 @@ class LocalizationService extends ChangeNotifier {
   }
 
   String tr(String key) {
-    final map = _currentLanguage == AppLanguage.tr ? _trMap : _enMap;
-    return map[key] ?? key;
+    final map = switch (_currentLanguage) {
+      AppLanguage.tr => _trMap,
+      AppLanguage.en => _enMap,
+      AppLanguage.de => _deMap,
+      AppLanguage.es => _esMap,
+    };
+    return map[key] ?? _enMap[key] ?? key;
   }
 
   static const Map<String, String> _trMap = {
@@ -60,6 +103,7 @@ class LocalizationService extends ChangeNotifier {
     'export_json': 'Proje Dosyası (JSON) İndir',
     'import_json': 'JSON Proje Yükle',
     'tally_summary': 'Motif Sayacı & Özet',
+    'section_breakdown': 'Parça Bazında Dağılım',
     'motif_library': 'Motif Kütüphanem',
     'new_motif': 'Yeni Motif Tasarla',
     'edit_motif': 'Motifi Düzenle',
@@ -106,6 +150,8 @@ class LocalizationService extends ChangeNotifier {
     'crop_confirm': 'Kırp ve Motifi Kaydet',
     'photo_motif_name_default': 'Gerçek Motifim',
     'photo_loading_error': 'Fotoğraf yüklenirken bir hata oluştu.',
+    'select_language': 'Dil Seçin',
+    'selected_round_prefix': 'Seçili Tur',
   };
 
   static const Map<String, String> _enMap = {
@@ -135,6 +181,7 @@ class LocalizationService extends ChangeNotifier {
     'export_json': 'Download Project File (JSON)',
     'import_json': 'Import JSON Project',
     'tally_summary': 'Motif Tally & Summary',
+    'section_breakdown': 'Section Breakdown',
     'motif_library': 'Motif Library',
     'new_motif': 'Design New Motif',
     'edit_motif': 'Edit Motif',
@@ -181,6 +228,164 @@ class LocalizationService extends ChangeNotifier {
     'crop_confirm': 'Crop and Save Motif',
     'photo_motif_name_default': 'My Real Square',
     'photo_loading_error': 'Failed to load photo.',
+    'select_language': 'Select Language',
+    'selected_round_prefix': 'Selected Round',
+  };
+
+  static const Map<String, String> _deMap = {
+    'app_title': 'MystCrochet Planner',
+    'app_subtitle': 'Granny Square Projekt- & Farbplaner',
+    'new_project': 'Neues Projekt starten',
+    'recent_projects': 'Gespeicherte Projekte',
+    'no_recent_projects': 'Noch keine gespeicherten Projekte. Starte oben ein neues Projekt!',
+    'template_sweater_title': 'Pullover & Strickjacke',
+    'template_sweater_desc': 'Zusammenbau-Vorlage mit Vorderteil, Rückenteil und Ärmeln.',
+    'template_blanket_title': 'Decke & Überwurf',
+    'template_blanket_desc': 'NxM-Gitter für Babydecken, Sofadecken oder Tagesdecken.',
+    'template_tote_title': '13-Quadrate Tote-Tasche',
+    'template_tote_desc': 'Klassisches Origami-Faltmuster aus Granny Squares.',
+    'template_custom_title': 'Benutzerdefiniertes Gitter',
+    'template_custom_desc': 'Freie Arbeitsfläche mit individueller Zeilen- und Spaltenanzahl.',
+    'create_project_dialog_title': 'Projekteinstellungen',
+    'project_name': 'Projektname',
+    'rows': 'Zeilenanzahl',
+    'cols': 'Spaltenanzahl',
+    'create_btn': 'Projekt starten',
+    'cancel_btn': 'Abbrechen',
+    'save_btn': 'Speichern',
+    'saved_success': 'Projekt erfolgreich gespeichert!',
+    'export_btn': 'Exportieren',
+    'export_png': 'Als PNG-Bild herunterladen',
+    'export_json': 'Projektdatei (JSON) herunterladen',
+    'import_json': 'JSON-Projekt importieren',
+    'tally_summary': 'Motiv-Zähler & Übersicht',
+    'section_breakdown': 'Aufteilung nach Teilen',
+    'motif_library': 'Motiv-Bibliothek',
+    'new_motif': 'Neues Motiv entwerfen',
+    'edit_motif': 'Motiv bearbeiten',
+    'delete_motif': 'Motiv löschen',
+    'active_motif': 'Aktives Motiv',
+    'brush_tool': 'Pinsel (Klicken/Ziehen zum Platzieren)',
+    'fill_all': 'Alles füllen',
+    'fill_empty': 'Leere füllen',
+    'shuffle_random': 'Zufällig mischen',
+    'clear_section': 'Abschnitt leeren',
+    'total_squares': 'Gesamte Quadrate',
+    'filled_squares': 'Gefüllte Quadrate',
+    'empty_squares': 'Verbleibend',
+    'completion_rate': 'Fortschritt',
+    'motif_tally_breakdown': 'Zu häkelnde Quadrate',
+    'units': 'Stk.',
+    'round': 'Runde',
+    'round_center': 'Runde 1 (Mitte)',
+    'round_border': 'Runde 4 (Rand)',
+    'select_color': 'Garnfarbe wählen',
+    'motif_type': 'Motiv-Stil',
+    'motif_name': 'Motivname',
+    'section_front': 'Vorderteil',
+    'section_back': 'Rückenteil',
+    'section_left_sleeve': 'Linker Ärmel',
+    'section_right_sleeve': 'Rechter Ärmel',
+    'section_blanket': 'Deckengitter',
+    'section_tote': 'Taschen-Faltmuster',
+    'section_custom': 'Arbeitsgitter',
+    'delete_project': 'Projekt löschen',
+    'delete_confirm': 'Bist du sicher, dass du dieses Projekt löschen möchtest?',
+    'delete': 'Löschen',
+    'quick_size_baby': 'Babydecke (5x6)',
+    'quick_size_throw': 'Sofadecke (6x8)',
+    'quick_size_queen': 'Tagesdecke groß (8x10)',
+    'upload_photo': 'Foto aufnehmen / hochladen',
+    'take_photo': 'Mit Kamera aufnehmen',
+    'pick_gallery': 'Aus Galerie / Dateien wählen',
+    'photo_square': 'Foto-Quadrat',
+    'crop_title': 'Motiv zuschneiden & ausrichten',
+    'crop_instructions': 'Richte dein Quadrat im 1:1-Rahmen aus. Du kannst verschieben, zoomen und drehen.',
+    'rotate_btn': 'Drehen (90°)',
+    'zoom_label': 'Zoom',
+    'crop_confirm': 'Zuschneiden und speichern',
+    'photo_motif_name_default': 'Mein echtes Quadrat',
+    'photo_loading_error': 'Fehler beim Laden des Fotos.',
+    'select_language': 'Sprache wählen',
+    'selected_round_prefix': 'Ausgewählte Runde',
+  };
+
+  static const Map<String, String> _esMap = {
+    'app_title': 'MystCrochet Planner',
+    'app_subtitle': 'Planificador de Proyectos y Colores de Granny Square',
+    'new_project': 'Iniciar Nuevo Proyecto',
+    'recent_projects': 'Proyectos Guardados',
+    'no_recent_projects': 'Aún no hay proyectos guardados. ¡Inicia un nuevo proyecto arriba!',
+    'template_sweater_title': 'Suéter y Cárdigan',
+    'template_sweater_desc': 'Plantilla de montaje con delantero, espalda y mangas.',
+    'template_blanket_title': 'Manta y Colcha',
+    'template_blanket_desc': 'Cuadrícula NxM para mantas de bebé, mantas de sofá o colchas.',
+    'template_tote_title': 'Bolso Tote de 13 Cuadrados',
+    'template_tote_desc': 'Patrón clásico de origami para bolso con granny squares.',
+    'template_custom_title': 'Cuadrícula Personalizada',
+    'template_custom_desc': 'Lienzo libre con número personalizado de filas y columnas.',
+    'create_project_dialog_title': 'Configuración del Proyecto',
+    'project_name': 'Nombre del Proyecto',
+    'rows': 'Número de Filas',
+    'cols': 'Número de Columnas',
+    'create_btn': 'Iniciar Proyecto',
+    'cancel_btn': 'Cancelar',
+    'save_btn': 'Guardar',
+    'saved_success': '¡Proyecto guardado con éxito!',
+    'export_btn': 'Exportar',
+    'export_png': 'Descargar Imagen PNG',
+    'export_json': 'Descargar Archivo de Proyecto (JSON)',
+    'import_json': 'Importar Proyecto JSON',
+    'tally_summary': 'Contador de Motivos y Resumen',
+    'section_breakdown': 'Distribución por Secciones',
+    'motif_library': 'Biblioteca de Motivos',
+    'new_motif': 'Diseñar Nuevo Motivo',
+    'edit_motif': 'Editar Motivo',
+    'delete_motif': 'Eliminar Motivo',
+    'active_motif': 'Motivo Activo',
+    'brush_tool': 'Pincel (Clic/Arrastrar para Colocar)',
+    'fill_all': 'Rellenar Todo',
+    'fill_empty': 'Rellenar Vacíos',
+    'shuffle_random': 'Mezclar Colores',
+    'clear_section': 'Limpiar Sección',
+    'total_squares': 'Total de Cuadrados',
+    'filled_squares': 'Cuadrados Llenos',
+    'empty_squares': 'Restantes',
+    'completion_rate': 'Progreso',
+    'motif_tally_breakdown': 'Cuadrados a Tejer',
+    'units': 'uds.',
+    'round': 'Vuelta',
+    'round_center': 'Vuelta 1 (Centro)',
+    'round_border': 'Vuelta 4 (Borde)',
+    'select_color': 'Seleccionar Color de Hilo',
+    'motif_type': 'Estilo de Motivo',
+    'motif_name': 'Nombre del Motivo',
+    'section_front': 'Delantero',
+    'section_back': 'Espalda',
+    'section_left_sleeve': 'Manga Izquierda',
+    'section_right_sleeve': 'Manga Derecha',
+    'section_blanket': 'Cuadrícula de Manta',
+    'section_tote': 'Patrón de Doblado de Bolso',
+    'section_custom': 'Lienzo de Trabajo',
+    'delete_project': 'Eliminar Proyecto',
+    'delete_confirm': '¿Estás seguro de que deseas eliminar este proyecto?',
+    'delete': 'Eliminar',
+    'quick_size_baby': 'Manta de Bebé (5x6)',
+    'quick_size_throw': 'Manta de Sofá (6x8)',
+    'quick_size_queen': 'Colcha Grande (8x10)',
+    'upload_photo': 'Tomar / Subir Foto',
+    'take_photo': 'Tomar con la Cámara',
+    'pick_gallery': 'Elegir de Galería / Archivos',
+    'photo_square': 'Cuadrado de Foto',
+    'crop_title': 'Recortar y Alinear Motivo',
+    'crop_instructions': 'Alinea tu cuadrado dentro del marco 1:1. Puedes desplazar, hacer zoom y rotar.',
+    'rotate_btn': 'Rotar (90°)',
+    'zoom_label': 'Zoom',
+    'crop_confirm': 'Recortar y Guardar Motivo',
+    'photo_motif_name_default': 'Mi Cuadrado Real',
+    'photo_loading_error': 'Error al cargar la foto.',
+    'select_language': 'Seleccionar Idioma',
+    'selected_round_prefix': 'Vuelta Seleccionada',
   };
 }
 

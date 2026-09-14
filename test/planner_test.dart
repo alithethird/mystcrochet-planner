@@ -6,6 +6,7 @@ import 'package:mystcrochet_planner/models/project.dart';
 import 'package:mystcrochet_planner/models/yarn_color.dart';
 import 'package:mystcrochet_planner/providers/project_provider.dart';
 import 'package:mystcrochet_planner/services/image_cropper_service.dart';
+import 'package:mystcrochet_planner/services/localization.dart';
 
 void main() {
   group('MystCrochet Models & Logic Tests', () {
@@ -255,6 +256,77 @@ void main() {
       final restoredPhotoMotif = restored.motifs.firstWhere((m) => m.id == 'photo_test_1');
       expect(restoredPhotoMotif.photoBase64, sampleBase64);
       expect(restoredPhotoMotif.type, MotifType.photo);
+    });
+
+    test('LocalizationService supports TR, EN, DE, and ES', () {
+      final loc = LocalizationService();
+
+      loc.setLanguage(AppLanguage.tr);
+      expect(loc.currentLanguage, AppLanguage.tr);
+      expect(loc.tr('template_sweater_title'), 'Kazak & Hırka');
+      expect(loc.tr('section_breakdown'), 'Parça Bazında Dağılım');
+
+      loc.setLanguage(AppLanguage.en);
+      expect(loc.currentLanguage, AppLanguage.en);
+      expect(loc.tr('template_sweater_title'), 'Sweater & Cardigan');
+      expect(loc.tr('section_breakdown'), 'Section Breakdown');
+
+      loc.setLanguage(AppLanguage.de);
+      expect(loc.currentLanguage, AppLanguage.de);
+      expect(loc.tr('template_sweater_title'), 'Pullover & Strickjacke');
+      expect(loc.tr('section_breakdown'), 'Aufteilung nach Teilen');
+      expect(AppLanguage.de.label, 'Deutsch');
+      expect(AppLanguage.de.flag, '🇩🇪');
+
+      loc.setLanguage(AppLanguage.es);
+      expect(loc.currentLanguage, AppLanguage.es);
+      expect(loc.tr('template_sweater_title'), 'Suéter y Cárdigan');
+      expect(loc.tr('section_breakdown'), 'Distribución por Secciones');
+      expect(AppLanguage.es.label, 'Español');
+      expect(AppLanguage.es.flag, '🇪🇸');
+
+      // Reset
+      loc.setLanguage(AppLanguage.tr);
+    });
+
+    test('Sweater garment sections dynamically change with language', () {
+      final loc = LocalizationService();
+      final sweater = CrochetProject.createSweater();
+      final front = sweater.sections.firstWhere((s) => s.id == 'front');
+      final back = sweater.sections.firstWhere((s) => s.id == 'back');
+      final leftSleeve = sweater.sections.firstWhere((s) => s.id == 'left_sleeve');
+      final rightSleeve = sweater.sections.firstWhere((s) => s.id == 'right_sleeve');
+
+      // Turkish
+      loc.setLanguage(AppLanguage.tr);
+      expect(front.localizedName, 'Ön Gövde');
+      expect(back.localizedName, 'Arka Gövde');
+      expect(leftSleeve.localizedName, 'Sol Kol');
+      expect(rightSleeve.localizedName, 'Sağ Kol');
+
+      // English
+      loc.setLanguage(AppLanguage.en);
+      expect(front.localizedName, 'Front Body');
+      expect(back.localizedName, 'Back Body');
+      expect(leftSleeve.localizedName, 'Left Sleeve');
+      expect(rightSleeve.localizedName, 'Right Sleeve');
+
+      // German
+      loc.setLanguage(AppLanguage.de);
+      expect(front.localizedName, 'Vorderteil');
+      expect(back.localizedName, 'Rückenteil');
+      expect(leftSleeve.localizedName, 'Linker Ärmel');
+      expect(rightSleeve.localizedName, 'Rechter Ärmel');
+
+      // Spanish
+      loc.setLanguage(AppLanguage.es);
+      expect(front.localizedName, 'Delantero');
+      expect(back.localizedName, 'Espalda');
+      expect(leftSleeve.localizedName, 'Manga Izquierda');
+      expect(rightSleeve.localizedName, 'Manga Derecha');
+
+      // Reset
+      loc.setLanguage(AppLanguage.tr);
     });
   });
 }

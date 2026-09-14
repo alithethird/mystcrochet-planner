@@ -321,7 +321,7 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Seçili Tur: ${t('round')} ${_activeRoundIndex + 1} (${_rounds[_activeRoundIndex].name})',
+                                  '${t('selected_round_prefix')}: ${t('round')} ${_activeRoundIndex + 1} (${_rounds[_activeRoundIndex].name})',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,

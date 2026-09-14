@@ -14,6 +14,7 @@ import '../widgets/tally_drawer_widget.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/image_cropper_service.dart';
 import '../widgets/photo_crop_dialog.dart';
+import '../widgets/language_selector.dart';
 
 class EditorScreen extends StatefulWidget {
   final ProjectProvider projectProvider;
@@ -37,10 +38,12 @@ class _EditorScreenState extends State<EditorScreen> {
   void initState() {
     super.initState();
     widget.projectProvider.addListener(_onProviderUpdate);
+    LocalizationService().addListener(_onProviderUpdate);
   }
 
   @override
   void dispose() {
+    LocalizationService().removeListener(_onProviderUpdate);
     widget.projectProvider.removeListener(_onProviderUpdate);
     super.dispose();
   }
@@ -320,15 +323,10 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
 
           // Language Switch
-          Padding(
-            padding: const EdgeInsets.only(right: 12, left: 4),
-            child: IconButton(
-              icon: const Icon(Icons.language, size: 20),
-              tooltip: 'TR / EN',
-              onPressed: () {
-                LocalizationService().toggleLanguage();
-                setState(() {});
-              },
+          const Padding(
+            padding: EdgeInsets.only(right: 12, left: 4),
+            child: Center(
+              child: LanguageSelector(compact: true),
             ),
           ),
         ],
@@ -359,7 +357,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(sec.name),
+                              Text(sec.localizedName),
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(

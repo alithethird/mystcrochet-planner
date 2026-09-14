@@ -1,4 +1,5 @@
 import 'motif.dart';
+import '../services/localization.dart';
 
 enum ProjectType {
   blanket,
@@ -11,13 +12,13 @@ extension ProjectTypeExtension on ProjectType {
   String get displayName {
     switch (this) {
       case ProjectType.blanket:
-        return 'Battaniye / Blanket';
+        return t('template_blanket_title');
       case ProjectType.sweater:
-        return 'Kazak & Hırka / Sweater';
+        return t('template_sweater_title');
       case ProjectType.toteBag:
-        return 'Tote Çanta / Tote Bag';
+        return t('template_tote_title');
       case ProjectType.custom:
-        return 'Özel Izgara / Custom Grid';
+        return t('template_custom_title');
     }
   }
 
@@ -107,6 +108,22 @@ class ProjectSection {
       cols: cols ?? this.cols,
       slots: slots ?? this.slots,
     );
+  }
+
+  String get localizedName {
+    final key = switch (id) {
+      'front' => 'section_front',
+      'back' => 'section_back',
+      'left_sleeve' => 'section_left_sleeve',
+      'right_sleeve' => 'section_right_sleeve',
+      'blanket' || 'main_grid' => 'section_blanket',
+      'tote' || 'tote_layout' => 'section_tote',
+      'custom' || 'custom_grid' => 'section_custom',
+      _ => 'section_$id',
+    };
+    final translated = LocalizationService().tr(key);
+    if (translated != key) return translated;
+    return name;
   }
 
   int get activeSlotCount => slots.where((s) => s.isActive).length;
