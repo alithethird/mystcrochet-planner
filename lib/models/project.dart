@@ -137,6 +137,21 @@ class ProjectSection {
     }
   }
 
+  ProjectSection resize({required int newRows, required int newCols}) {
+    final newSlots = <GridSlot>[];
+    for (int r = 0; r < newRows; r++) {
+      for (int c = 0; c < newCols; c++) {
+        final existing = slotAt(r, c);
+        if (existing != null) {
+          newSlots.add(existing);
+        } else {
+          newSlots.add(GridSlot(row: r, col: c));
+        }
+      }
+    }
+    return copyWith(rows: newRows, cols: newCols, slots: newSlots);
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
@@ -164,6 +179,7 @@ class CrochetProject {
   final List<Motif> motifs;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final double? squareSizeCm;
 
   const CrochetProject({
     required this.id,
@@ -173,6 +189,7 @@ class CrochetProject {
     required this.motifs,
     required this.createdAt,
     required this.updatedAt,
+    this.squareSizeCm = 10.0,
   });
 
   CrochetProject copyWith({
@@ -183,6 +200,7 @@ class CrochetProject {
     List<Motif>? motifs,
     DateTime? createdAt,
     DateTime? updatedAt,
+    double? squareSizeCm,
   }) {
     return CrochetProject(
       id: id ?? this.id,
@@ -192,6 +210,7 @@ class CrochetProject {
       motifs: motifs ?? this.motifs,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      squareSizeCm: squareSizeCm ?? this.squareSizeCm,
     );
   }
 
@@ -221,6 +240,7 @@ class CrochetProject {
         'motifs': motifs.map((m) => m.toJson()).toList(),
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
+        'squareSizeCm': squareSizeCm,
       };
 
   factory CrochetProject.fromJson(Map<String, dynamic> json) => CrochetProject(
@@ -240,6 +260,7 @@ class CrochetProject {
             DateTime.now(),
         updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
             DateTime.now(),
+        squareSizeCm: (json['squareSizeCm'] as num?)?.toDouble() ?? 10.0,
       );
 
   // --- Factory Templates ---
@@ -283,6 +304,7 @@ class CrochetProject {
     int bodyCols = 4,
     int sleeveRows = 4,
     int sleeveCols = 3,
+    double? squareSizeCm = 10.0,
     List<Motif>? customMotifs,
   }) {
     final now = DateTime.now();
@@ -301,6 +323,7 @@ class CrochetProject {
       id: 'sweater_${now.millisecondsSinceEpoch}',
       name: name ?? 'Granny Kazak / Hırka',
       type: ProjectType.sweater,
+      squareSizeCm: squareSizeCm ?? 10.0,
       sections: [
         ProjectSection(
           id: 'front',

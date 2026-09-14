@@ -328,5 +328,125 @@ void main() {
       // Reset
       loc.setLanguage(AppLanguage.tr);
     });
+
+    test('ProjectSection.resize preserves existing motifs and adjusts slot bounds', () {
+      final section = ProjectSection(
+        id: 'test_sec',
+        name: 'Test Section',
+        rows: 2,
+        cols: 2,
+        slots: const [
+          GridSlot(row: 0, col: 0, motifId: 'motif_a'),
+          GridSlot(row: 0, col: 1, motifId: 'motif_b'),
+          GridSlot(row: 1, col: 0, motifId: 'motif_c'),
+          GridSlot(row: 1, col: 1, motifId: null),
+        ],
+      );
+
+      // Expand to 3x3
+      final expanded = section.resize(newRows: 3, newCols: 3);
+      expect(expanded.rows, 3);
+      expect(expanded.cols, 3);
+      expect(expanded.slots.length, 9);
+      expect(expanded.slotAt(0, 0)?.motifId, 'motif_a');
+      expect(expanded.slotAt(0, 1)?.motifId, 'motif_b');
+      expect(expanded.slotAt(1, 0)?.motifId, 'motif_c');
+      expect(expanded.slotAt(2, 2)?.motifId, isNull);
+
+      // Shrink to 1x2
+      final shrunk = section.resize(newRows: 1, newCols: 2);
+      expect(shrunk.rows, 1);
+      expect(shrunk.cols, 2);
+      expect(shrunk.slots.length, 2);
+      expect(shrunk.slotAt(0, 0)?.motifId, 'motif_a');
+      expect(shrunk.slotAt(0, 1)?.motifId, 'motif_b');
+      expect(shrunk.slotAt(1, 0), isNull);
+    });
+
+    test('Sweater customizable dimensions and physical size calculation', () {
+      const squareSize = 12.0; // 12 cm per granny square
+      final sweater = CrochetProject.createSweater(
+        name: 'Oversize Kazak',
+        bodyRows: 5,
+        bodyCols: 5,
+        sleeveRows: 4,
+        sleeveCols: 3,
+        squareSizeCm: squareSize,
+      );
+
+      expect(sweater.squareSizeCm, 12.0);
+      final front = sweater.sections.firstWhere((s) => s.id == 'front');
+      final sleeve = sweater.sections.firstWhere((s) => s.id == 'left_sleeve');
+
+      // Dimensions math:
+      final bodyWidthCm = front.cols * squareSize;
+      final chestCircumferenceCm = front.cols * 2 * squareSize;
+      final bodyLengthCm = front.rows * squareSize;
+      final sleeveLengthCm = sleeve.rows * squareSize;
+      final sleeveWidthCm = sleeve.cols * squareSize;
+
+      expect(bodyWidthCm, 60.0);
+      expect(chestCircumferenceCm, 120.0);
+      expect(bodyLengthCm, 60.0);
+      expect(sleeveLengthCm, 48.0);
+      expect(sleeveWidthCm, 36.0);
+
+      // Total squares: (5*5)*2 + (4*3)*2 = 50 + 24 = 74
+      expect(sweater.totalActiveSquares, 74);
+    });
+
+    test('ProjectProvider updateSweaterDimensions modifies sections dynamically', () {
+      final provider = ProjectProvider();
+      final sweater = CrochetProject.createSweater(
+        bodyRows: 4,
+        bodyCols: 4,
+        sleeveRows: 3,
+        sleeveCols: 3,
+        squareSizeCm: 10.0,
+      );
+      provider.setProject(sweater);
+
+      // Paint a slot on front body
+      provider.selectSection(0);
+      provider.selectMotif(provider.project!.motifs.first.id);
+      provider.updateSlot(0, 0);
+
+      // Now dynamically update dimensions to 6x5 body and 5x4 sleeves with 11.5 cm squares
+      provider.updateSweaterDimensions(
+        bodyRows: 6,
+        bodyCols: 5,
+        sleeveRows: 5,
+        sleeveCols: 4,
+        squareSizeCm: 11.5,
+      );
+
+      final updatedProject = provider.project!;
+      expect(updatedProject.squareSizeCm, 11.5);
+      final front = updatedProject.sections.firstWhere((s) => s.id == 'front');
+      final back = updatedProject.sections.firstWhere((s) => s.id == 'back');
+      final leftSleeve = updatedProject.sections.firstWhere((s) => s.id == 'left_sleeve');
+      final rightSleeve = updatedProject.sections.firstWhere((s) => s.id == 'right_sleeve');
+
+      expect(front.rows, 6);
+      expect(front.cols, 5);
+      expect(back.rows, 6);
+      expect(back.cols, 5);
+      expect(leftSleeve.rows, 5);
+      expect(leftSleeve.cols, 4);
+      expect(rightSleeve.rows, 5);
+      expect(rightSleeve.cols, 4);
+
+      // Verify painted slot (0,0) was preserved
+      expect(front.slotAt(0, 0)?.motifId, provider.project!.motifs.first.id);
+
+      // Total active squares: (6*5)*2 + (5*4)*2 = 60 + 40 = 100
+      expect(updatedProject.totalActiveSquares, 100);
+
+      // JSON serialization retains squareSizeCm
+      final json = updatedProject.toJson();
+      expect(json['squareSizeCm'], 11.5);
+      final restored = CrochetProject.fromJson(json);
+      expect(restored.squareSizeCm, 11.5);
+    });
   });
 }

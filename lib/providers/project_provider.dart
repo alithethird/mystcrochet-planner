@@ -237,4 +237,55 @@ class ProjectProvider extends ChangeNotifier {
     }
     return counts;
   }
+
+  void updateSquareSize(double sizeCm) {
+    if (_project == null) return;
+    _project = _project!.copyWith(
+      squareSizeCm: sizeCm,
+      updatedAt: DateTime.now(),
+    );
+    notifyListeners();
+  }
+
+  void updateSweaterDimensions({
+    required int bodyRows,
+    required int bodyCols,
+    required int sleeveRows,
+    required int sleeveCols,
+    double? squareSizeCm,
+  }) {
+    if (_project == null || _project!.type != ProjectType.sweater) return;
+
+    final updatedSections = _project!.sections.map((sec) {
+      if (sec.id == 'front' || sec.id == 'back') {
+        return sec.resize(newRows: bodyRows, newCols: bodyCols);
+      } else if (sec.id == 'left_sleeve' || sec.id == 'right_sleeve') {
+        return sec.resize(newRows: sleeveRows, newCols: sleeveCols);
+      }
+      return sec;
+    }).toList();
+
+    _project = _project!.copyWith(
+      sections: updatedSections,
+      squareSizeCm: squareSizeCm ?? _project!.squareSizeCm,
+      updatedAt: DateTime.now(),
+    );
+    notifyListeners();
+  }
+
+  void resizeSection(String sectionId, int newRows, int newCols) {
+    if (_project == null) return;
+    final updatedSections = _project!.sections.map((sec) {
+      if (sec.id == sectionId) {
+        return sec.resize(newRows: newRows, newCols: newCols);
+      }
+      return sec;
+    }).toList();
+
+    _project = _project!.copyWith(
+      sections: updatedSections,
+      updatedAt: DateTime.now(),
+    );
+    notifyListeners();
+  }
 }

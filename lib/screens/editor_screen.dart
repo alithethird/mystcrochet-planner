@@ -15,6 +15,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/image_cropper_service.dart';
 import '../widgets/photo_crop_dialog.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/sweater_dimensions_dialog.dart';
 
 class EditorScreen extends StatefulWidget {
   final ProjectProvider projectProvider;
@@ -200,6 +201,46 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  Future<void> _showSweaterDimensionsDialog() async {
+    final proj = widget.projectProvider.project;
+    if (proj == null) return;
+
+    final front = proj.sections.firstWhere((s) => s.id == 'front', orElse: () => proj.sections.first);
+    final sleeve = proj.sections.firstWhere(
+      (s) => s.id == 'left_sleeve' || s.id == 'right_sleeve',
+      orElse: () => proj.sections.last,
+    );
+
+    final result = await SweaterDimensionsDialog.show(
+      context,
+      isCreating: false,
+      initialBodyRows: front.rows,
+      initialBodyCols: front.cols,
+      initialSleeveRows: sleeve.rows,
+      initialSleeveCols: sleeve.cols,
+      initialSquareSizeCm: proj.squareSizeCm ?? 10.0,
+    );
+
+    if (result != null) {
+      widget.projectProvider.updateSweaterDimensions(
+        bodyRows: result.bodyRows,
+        bodyCols: result.bodyCols,
+        sleeveRows: result.sleeveRows,
+        sleeveCols: result.sleeveCols,
+        squareSizeCm: result.squareSizeCm,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t('saved_success')),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = widget.projectProvider;
@@ -315,6 +356,14 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
           const SizedBox(width: 4),
 
+          // Sweater Dimensions Button (if sweater)
+          if (project.type == ProjectType.sweater)
+            IconButton(
+              tooltip: t('sweater_dimensions_title'),
+              icon: const Icon(Icons.straighten),
+              onPressed: _showSweaterDimensionsDialog,
+            ),
+
           // Tally Drawer Button
           IconButton(
             tooltip: t('tally_summary'),
@@ -347,46 +396,65 @@ class _EditorScreenState extends State<EditorScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: List.generate(project.sections.length, (idx) {
-                      final sec = project.sections[idx];
-                      final isSelected = provider.currentSectionIndex == idx;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ChoiceChip(
-                          selected: isSelected,
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(sec.localizedName),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? Colors.white.withValues(alpha: 0.25)
-                                      : const Color(0xFFEFE8DE),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${sec.filledSlotCount}/${sec.activeSlotCount}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? Colors.white : AppColors.primary,
+                    children: [
+                      ...List.generate(project.sections.length, (idx) {
+                        final sec = project.sections[idx];
+                        final isSelected = provider.currentSectionIndex == idx;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ChoiceChip(
+                            selected: isSelected,
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(sec.localizedName),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Colors.white.withValues(alpha: 0.25)
+                                        : const Color(0xFFEFE8DE),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${sec.filledSlotCount}/${sec.activeSlotCount}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : AppColors.primary,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                            onSelected: (val) {
+                              if (val) provider.selectSection(idx);
+                            },
                           ),
-                          onSelected: (val) {
-                            if (val) provider.selectSection(idx);
-                          },
+                        );
+                      }),
+                      if (project.type == ProjectType.sweater) ...[
+                        const SizedBox(width: 8),
+                        ActionChip(
+                          avatar: const Icon(Icons.straighten, size: 16, color: AppColors.primary),
+                          label: Text(
+                            '${(project.squareSizeCm ?? 10.0).toStringAsFixed(0)} cm • ${t('dimensions_calculator_btn')}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          backgroundColor: const Color(0xFFF9F6F0),
+                          side: const BorderSide(color: Color(0xFFE2DCD5)),
+                          onPressed: _showSweaterDimensionsDialog,
                         ),
-                      );
-                    }),
+                      ],
+                    ],
                   ),
                 ),
               ),

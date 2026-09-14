@@ -5,6 +5,7 @@ import '../services/localization.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/sweater_dimensions_dialog.dart';
 import 'editor_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -134,49 +135,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _startSweaterDialog() {
-    final nameController = TextEditingController(text: 'Granny Hırka & Kazak');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(t('template_sweater_title')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: t('project_name')),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Parça Dağılımı:\n• Ön Gövde: 4x5 (20 Kare)\n• Arka Gövde: 4x5 (20 Kare)\n• Kollar (Sol & Sağ): 3x4 (12 + 12 = 24 Kare)\nToplam: 64 Motif',
-              style: TextStyle(height: 1.5, color: Color(0xFF756A63)),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(t('cancel_btn')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              final proj = CrochetProject.createSweater(
-                name: nameController.text.trim().isNotEmpty
-                    ? nameController.text.trim()
-                    : null,
-              );
-              _openProject(proj);
-            },
-            child: Text(t('create_btn')),
-          ),
-        ],
-      ),
+  Future<void> _startSweaterDialog() async {
+    final result = await SweaterDimensionsDialog.show(
+      context,
+      isCreating: true,
+      initialName: 'Granny Kazak / Hırka',
     );
+    if (result != null) {
+      final proj = CrochetProject.createSweater(
+        name: result.name,
+        bodyRows: result.bodyRows,
+        bodyCols: result.bodyCols,
+        sleeveRows: result.sleeveRows,
+        sleeveCols: result.sleeveCols,
+        squareSizeCm: result.squareSizeCm,
+      );
+      _openProject(proj);
+    }
   }
 
   void _startToteBag() {
