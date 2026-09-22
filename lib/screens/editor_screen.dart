@@ -8,6 +8,7 @@ import '../services/localization.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/canvas_grid_widget.dart';
+import '../widgets/freeform_canvas_widget.dart';
 import '../widgets/motif_designer_dialog.dart';
 import '../widgets/motif_preview_widget.dart';
 import '../widgets/tally_drawer_widget.dart';
@@ -325,11 +326,21 @@ class _EditorScreenState extends State<EditorScreen> {
           PopupMenuButton<String>(
             tooltip: t('export_btn'),
             icon: const Icon(Icons.ios_share_outlined, size: 20),
-            onSelected: (value) {
+            onSelected: (value) async {
               if (value == 'png') {
                 _exportPng();
               } else if (value == 'json') {
                 StorageService.exportProjectAsJson(project);
+              } else if (value == 'template') {
+                final messenger = ScaffoldMessenger.of(context);
+                await StorageService.saveCustomTemplate(project);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(t('template_saved_success')),
+                    backgroundColor: AppColors.secondary,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
               }
             },
             itemBuilder: (context) => [
@@ -350,6 +361,16 @@ class _EditorScreenState extends State<EditorScreen> {
                     const Icon(Icons.data_object_outlined, size: 18),
                     const SizedBox(width: 10),
                     Text(t('export_json')),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'template',
+                child: Row(
+                  children: [
+                    const Icon(Icons.bookmark_add_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(t('save_as_template')),
                   ],
                 ),
               ),
@@ -466,11 +487,26 @@ class _EditorScreenState extends State<EditorScreen> {
             child: currentSection != null
                 ? RepaintBoundary(
                     key: _canvasKey,
-                    child: CanvasGridWidget(
-                      section: currentSection,
-                      motifs: project.motifs,
-                      onSlotTap: (r, c) => provider.updateSlot(r, c),
-                    ),
+                    child: currentSection.isFreeform
+                        ? FreeformCanvasWidget(
+                            section: currentSection,
+                            motifs: project.motifs,
+                            activeMotifId: provider.activeMotifId,
+                            onSlotTap: (idx) {
+                              if (provider.activeMotifId != null) {
+                                provider.updateFreeformSlotMotif(idx, provider.activeMotifId);
+                              }
+                            },
+                            onSlotMove: (idx, newX, newY) => provider.moveFreeformSlot(idx, newX, newY),
+                            onAddSquare: (posX, posY) => provider.addFreeformSlot(posX, posY),
+                            onDuplicateSquare: (idx) => provider.duplicateFreeformSlot(idx),
+                            onDeleteSquare: (idx) => provider.deleteFreeformSlot(idx),
+                          )
+                        : CanvasGridWidget(
+                            section: currentSection,
+                            motifs: project.motifs,
+                            onSlotTap: (r, c) => provider.updateSlot(r, c),
+                          ),
                   )
                 : const SizedBox.shrink(),
           ),

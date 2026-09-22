@@ -22,5 +22,6 @@ void main() {
     expect(find.text(t('template_blanket_title')), findsOneWidget);
     expect(find.text(t('template_tote_title')), findsOneWidget);
     expect(find.text(t('template_custom_title')), findsOneWidget);
+    expect(find.text(t('template_freeform_title')), findsOneWidget);
   });
 }

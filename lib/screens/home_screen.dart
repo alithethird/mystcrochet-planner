@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<CrochetProject> _savedProjects = [];
+  List<CrochetProject> _customTemplates = [];
   bool _isLoading = true;
 
   @override
@@ -31,14 +32,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadProjects() async {
     setState(() => _isLoading = true);
     final list = await StorageService.loadProjects();
+    final templates = await StorageService.loadCustomTemplates();
     setState(() {
       _savedProjects = list;
+      _customTemplates = templates;
       _isLoading = false;
     });
   }
 
-  void _openProject(CrochetProject project) {
+  Future<void> _openProject(CrochetProject project, {bool isNew = false}) async {
+    if (isNew) {
+      await StorageService.saveProject(project);
+    }
     widget.projectProvider.setProject(project);
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EditorScreen(
@@ -47,6 +54,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _useCustomTemplate(CrochetProject template) async {
+    final now = DateTime.now();
+    final newProj = template.copyWith(
+      id: '${template.type.name}_${now.millisecondsSinceEpoch}',
+      name: '${template.name} (Kopya)',
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _openProject(newProj, isNew: true);
   }
 
   void _startBlanketDialog() {
@@ -117,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(t('cancel_btn')),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
                 final proj = CrochetProject.createBlanket(
                   name: nameController.text.trim().isNotEmpty
@@ -126,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   rows: rows,
                   cols: cols,
                 );
-                _openProject(proj);
+                await _openProject(proj, isNew: true);
               },
               child: Text(t('create_btn')),
             ),
@@ -151,13 +169,13 @@ class _HomeScreenState extends State<HomeScreen> {
         sleeveCols: result.sleeveCols,
         squareSizeCm: result.squareSizeCm,
       );
-      _openProject(proj);
+      await _openProject(proj, isNew: true);
     }
   }
 
-  void _startToteBag() {
+  Future<void> _startToteBag() async {
     final proj = CrochetProject.createToteBag();
-    _openProject(proj);
+    await _openProject(proj, isNew: true);
   }
 
   void _startCustomDialog() {
@@ -226,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(t('cancel_btn')),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
                 final proj = CrochetProject.createCustom(
                   name: nameController.text.trim().isNotEmpty
@@ -235,12 +253,57 @@ class _HomeScreenState extends State<HomeScreen> {
                   rows: rows,
                   cols: cols,
                 );
-                _openProject(proj);
+                await _openProject(proj, isNew: true);
               },
               child: Text(t('create_btn')),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _startFreeformDialog() {
+    final nameController = TextEditingController(text: 'Serbest Form Projem');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(t('template_freeform_title')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: t('project_name')),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              t('template_freeform_desc'),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF756A63)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t('cancel_btn')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final proj = CrochetProject.createFreeform(
+                name: nameController.text.trim().isNotEmpty
+                    ? nameController.text.trim()
+                    : null,
+              );
+              await _openProject(proj, isNew: true);
+            },
+            child: Text(t('create_btn')),
+          ),
+        ],
       ),
     );
   }
@@ -420,10 +483,102 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: const Color(0xFF4A708B),
                         onTap: _startCustomDialog,
                       ),
+                      _TemplateCard(
+                        icon: Icons.design_services,
+                        title: t('template_freeform_title'),
+                        desc: t('template_freeform_desc'),
+                        badge: 'Tuval',
+                        color: const Color(0xFF8B5A9C),
+                        onTap: _startFreeformDialog,
+                      ),
                     ],
                   );
                 },
               ),
+
+              if (_customTemplates.isNotEmpty) ...[
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    const Icon(Icons.bookmark_outlined, size: 20, color: Color(0xFF8B5A9C)),
+                    const SizedBox(width: 8),
+                    Text(
+                      t('custom_templates'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 104,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _customTemplates.length,
+                    itemBuilder: (context, index) {
+                      final tmpl = _customTemplates[index];
+                      return Container(
+                        width: 220,
+                        margin: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE5DDD3)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(_iconForType(tmpl.type), size: 18, color: const Color(0xFF8B5A9C)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    tmpl.name,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () async {
+                                    await StorageService.deleteCustomTemplate(tmpl.id);
+                                    _loadProjects();
+                                  },
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            ElevatedButton.icon(
+                              onPressed: () => _useCustomTemplate(tmpl),
+                              icon: const Icon(Icons.add, size: 14),
+                              label: const Text('Kullan / Use', style: TextStyle(fontSize: 11)),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                minimumSize: Size.zero,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 48),
 
@@ -577,6 +732,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return Icons.shopping_bag;
       case ProjectType.custom:
         return Icons.grid_on;
+      case ProjectType.freeform:
+        return Icons.design_services;
     }
   }
 

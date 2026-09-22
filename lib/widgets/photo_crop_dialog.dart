@@ -34,6 +34,7 @@ class _PhotoCropDialogState extends State<PhotoCropDialog> {
   Offset _panOffset = Offset.zero;
   bool _isProcessing = false;
   bool _saveToLibrary = true;
+  MotifShape _selectedShape = MotifShape.square;
 
   static const double _viewportSize = 280.0;
 
@@ -102,6 +103,7 @@ class _PhotoCropDialogState extends State<PhotoCropDialog> {
             'photo_motif_${DateTime.now().millisecondsSinceEpoch}',
         name: name,
         type: MotifType.photo,
+        shape: _selectedShape,
         rounds: const [],
         photoBase64: base64String,
       );
@@ -217,6 +219,39 @@ class _PhotoCropDialogState extends State<PhotoCropDialog> {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 8),
+
+              // Shape Selector
+              SegmentedButton<MotifShape>(
+                segments: const [
+                  ButtonSegment(
+                    value: MotifShape.square,
+                    label: Text('Kare'),
+                    icon: Icon(Icons.crop_square, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: MotifShape.hexagon,
+                    label: Text('Altıgen'),
+                    icon: Icon(Icons.hexagon_outlined, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: MotifShape.pentagon,
+                    label: Text('Beşgen'),
+                    icon: Icon(Icons.pentagon_outlined, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: MotifShape.triangle,
+                    label: Text('Üçgen'),
+                    icon: Icon(Icons.change_history, size: 16),
+                  ),
+                ],
+                selected: {_selectedShape},
+                onSelectionChanged: (newSelection) {
+                  setState(() {
+                    _selectedShape = newSelection.first;
+                  });
+                },
               ),
               const SizedBox(height: 12),
 

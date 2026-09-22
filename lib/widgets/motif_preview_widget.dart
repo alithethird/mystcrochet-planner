@@ -3,6 +3,49 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/motif.dart';
 
+Path createPolygonPath(Size size, MotifShape shape, {double factor = 1.0}) {
+  final path = Path();
+  final cx = size.width / 2;
+  final cy = size.height / 2;
+  final radius = (size.width / 2) * factor;
+
+  if (shape == MotifShape.square) {
+    final rect = Rect.fromCenter(center: Offset(cx, cy), width: radius * 2, height: radius * 2);
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius * 0.12));
+    path.addRRect(rrect);
+    return path;
+  }
+
+  final sides = shape.sides;
+  final startAngle = -pi / 2;
+  for (int i = 0; i < sides; i++) {
+    final angle = startAngle + (i * 2 * pi) / sides;
+    final x = cx + radius * cos(angle);
+    final y = cy + radius * sin(angle);
+    if (i == 0) {
+      path.moveTo(x, y);
+    } else {
+      path.lineTo(x, y);
+    }
+  }
+  path.close();
+  return path;
+}
+
+class PolygonClipper extends CustomClipper<Path> {
+  final MotifShape shape;
+
+  PolygonClipper(this.shape);
+
+  @override
+  Path getClip(Size size) {
+    return createPolygonPath(size, shape);
+  }
+
+  @override
+  bool shouldReclip(covariant PolygonClipper oldDelegate) => oldDelegate.shape != shape;
+}
+
 class MotifPreviewWidget extends StatelessWidget {
   final Motif motif;
   final double size;
@@ -26,7 +69,9 @@ class MotifPreviewWidget extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(size * 0.12),
+        borderRadius: motif.shape == MotifShape.square
+            ? BorderRadius.circular(size * 0.12)
+            : null,
         boxShadow: showShadow
             ? [
                 BoxShadow(
@@ -45,12 +90,15 @@ class MotifPreviewWidget extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: motif.type == MotifType.photo && motif.photoBase64 != null
-          ? Image.memory(
-              base64Decode(motif.photoBase64!),
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.medium,
+          ? ClipPath(
+              clipper: PolygonClipper(motif.shape),
+              child: Image.memory(
+                base64Decode(motif.photoBase64!),
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.medium,
+              ),
             )
           : CustomPaint(
               size: Size(size, size),
@@ -101,40 +149,28 @@ class _GrannySquarePainter extends CustomPainter {
   }
 
   void _paintClassicGranny(Canvas canvas, Size size, Offset center, int totalRounds) {
-    // Draw from outer round inwards, with cluster stitch cuts
     final halfSize = size.width / 2;
 
     for (int i = totalRounds - 1; i >= 0; i--) {
       final color = motif.rounds[i].color;
       final roundFraction = (i + 1) / totalRounds;
-      final currentRadius = halfSize * roundFraction;
 
       final paint = Paint()
         ..color = color
         ..style = PaintingStyle.fill;
 
-      final rect = Rect.fromCenter(
-        center: center,
-        width: currentRadius * 2,
-        height: currentRadius * 2,
-      );
-      final rrect = RRect.fromRectAndRadius(
-        rect,
-        Radius.circular(currentRadius * 0.18),
-      );
-      canvas.drawRRect(rrect, paint);
+      final shapePath = createPolygonPath(size, motif.shape, factor: roundFraction);
+      canvas.drawPath(shapePath, paint);
 
-      // Draw subtle crochet cluster stitch lines for classic granny look
       if (i > 0) {
         final strokePaint = Paint()
           ..color = Colors.black.withValues(alpha: 0.08)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.0;
-        canvas.drawRRect(rrect, strokePaint);
+        canvas.drawPath(shapePath, strokePaint);
       }
     }
 
-    // Inner center ring hole
     final centerHolePaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.12)
       ..style = PaintingStyle.fill;
@@ -153,62 +189,35 @@ class _GrannySquarePainter extends CustomPainter {
         ..color = color
         ..style = PaintingStyle.fill;
 
-      final rect = Rect.fromCenter(
-        center: center,
-        width: currentRadius * 2,
-        height: currentRadius * 2,
-      );
-      final rrect = RRect.fromRectAndRadius(
-        rect,
-        Radius.circular(currentRadius * 0.1),
-      );
-      canvas.drawRRect(rrect, paint);
+      final shapePath = createPolygonPath(size, motif.shape, factor: roundFraction);
+      canvas.drawPath(shapePath, paint);
 
-      // Corner diagonal lines characteristic of solid granny
       final linePaint = Paint()
         ..color = Colors.black.withValues(alpha: 0.06)
         ..strokeWidth = 1.2;
-      canvas.drawLine(
-        Offset(center.dx - currentRadius, center.dy - currentRadius),
-        center,
-        linePaint,
-      );
-      canvas.drawLine(
-        Offset(center.dx + currentRadius, center.dy - currentRadius),
-        center,
-        linePaint,
-      );
-      canvas.drawLine(
-        Offset(center.dx - currentRadius, center.dy + currentRadius),
-        center,
-        linePaint,
-      );
-      canvas.drawLine(
-        Offset(center.dx + currentRadius, center.dy + currentRadius),
-        center,
-        linePaint,
-      );
+
+      final sides = motif.shape.sides;
+      final startAngle = -pi / 2;
+      for (int k = 0; k < sides; k++) {
+        final angle = startAngle + (k * 2 * pi) / sides;
+        final vx = center.dx + currentRadius * cos(angle);
+        final vy = center.dy + currentRadius * sin(angle);
+        canvas.drawLine(Offset(vx, vy), center, linePaint);
+      }
     }
   }
 
   void _paintSunburst(Canvas canvas, Size size, Offset center, int totalRounds) {
     final halfSize = size.width / 2;
 
-    // Outermost round (Round 4 or totalRounds - 1): Squared frame
     if (totalRounds >= 4) {
       final outerPaint = Paint()
         ..color = motif.rounds[totalRounds - 1].color
         ..style = PaintingStyle.fill;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(center: center, width: size.width, height: size.height),
-          Radius.circular(size.width * 0.15),
-        ),
-        outerPaint,
-      );
+      final shapePath = createPolygonPath(size, motif.shape, factor: 1.0);
+      canvas.drawPath(shapePath, outerPaint);
     }
 
-    // Round 2 / 3: Radiating Petals (Sunburst floral ring)
     final petalColorIndex = totalRounds >= 3 ? totalRounds - 2 : 0;
     final petalColor = motif.rounds[petalColorIndex].color;
     final petalRadius = halfSize * 0.72;
@@ -217,8 +226,7 @@ class _GrannySquarePainter extends CustomPainter {
       ..color = petalColor
       ..style = PaintingStyle.fill;
 
-    // Draw 16 radiating petal ovals
-    const int petalCount = 16;
+    final int petalCount = motif.shape.sides * 3;
     for (int i = 0; i < petalCount; i++) {
       final angle = (i * 2 * pi) / petalCount;
       final px = center.dx + cos(angle) * (petalRadius * 0.65);
@@ -238,7 +246,6 @@ class _GrannySquarePainter extends CustomPainter {
       canvas.restore();
     }
 
-    // Round 1: Inner puff ring
     if (totalRounds >= 2) {
       final puffColorIndex = min(1, totalRounds - 1);
       final puffColor = motif.rounds[puffColorIndex].color;
@@ -248,7 +255,7 @@ class _GrannySquarePainter extends CustomPainter {
         ..color = puffColor
         ..style = PaintingStyle.fill;
 
-      const int puffCount = 8;
+      final int puffCount = motif.shape.sides * 2;
       for (int i = 0; i < puffCount; i++) {
         final angle = (i * 2 * pi) / puffCount;
         final px = center.dx + cos(angle) * (puffRadius * 0.55);
@@ -257,14 +264,12 @@ class _GrannySquarePainter extends CustomPainter {
       }
     }
 
-    // Round 0: Inner Center Circle
     final centerColor = motif.rounds[0].color;
     final centerPaint = Paint()
       ..color = centerColor
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, halfSize * 0.22, centerPaint);
 
-    // Center eye dot
     final dotPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.08)
       ..style = PaintingStyle.fill;

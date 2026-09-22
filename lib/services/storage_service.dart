@@ -8,6 +8,46 @@ import 'download_helper.dart';
 class StorageService {
   static const String _projectsKey = 'mystcrochet_projects_list';
   static const String _personalMotifsKey = 'mystcrochet_personal_motifs';
+  static const String _customTemplatesKey = 'mystcrochet_custom_templates';
+
+  static Future<List<CrochetProject>> loadCustomTemplates() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_customTemplatesKey);
+      if (raw == null || raw.isEmpty) return [];
+
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list
+          .map((item) => CrochetProject.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<void> saveCustomTemplate(CrochetProject project) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = await loadCustomTemplates();
+
+    final existingIndex = list.indexWhere((p) => p.id == project.id);
+    if (existingIndex >= 0) {
+      list[existingIndex] = project.copyWith(updatedAt: DateTime.now());
+    } else {
+      list.insert(0, project);
+    }
+
+    final encoded = jsonEncode(list.map((p) => p.toJson()).toList());
+    await prefs.setString(_customTemplatesKey, encoded);
+  }
+
+  static Future<void> deleteCustomTemplate(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = await loadCustomTemplates();
+    list.removeWhere((p) => p.id == id);
+
+    final encoded = jsonEncode(list.map((p) => p.toJson()).toList());
+    await prefs.setString(_customTemplatesKey, encoded);
+  }
 
   static Future<List<Motif>> loadPersonalMotifs() async {
     try {

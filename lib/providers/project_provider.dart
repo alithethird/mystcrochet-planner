@@ -288,4 +288,63 @@ class ProjectProvider extends ChangeNotifier {
     );
     notifyListeners();
   }
+
+  // --- Freeform Slot Management ---
+
+  void addFreeformSlot(double posX, double posY) {
+    if (_project == null || currentSection == null) return;
+    final sec = currentSection!;
+    final slots = List<GridSlot>.from(sec.slots);
+    slots.add(GridSlot(
+      row: slots.length,
+      col: 0,
+      motifId: _activeMotifId,
+      posX: posX,
+      posY: posY,
+    ));
+    _updateCurrentSection(sec.copyWith(slots: slots));
+  }
+
+  void moveFreeformSlot(int index, double posX, double posY) {
+    if (_project == null || currentSection == null) return;
+    final sec = currentSection!;
+    if (index < 0 || index >= sec.slots.length) return;
+    final slots = List<GridSlot>.from(sec.slots);
+    slots[index] = slots[index].copyWith(posX: posX, posY: posY);
+    _updateCurrentSection(sec.copyWith(slots: slots));
+  }
+
+  void updateFreeformSlotMotif(int index, String? motifId) {
+    if (_project == null || currentSection == null) return;
+    final sec = currentSection!;
+    if (index < 0 || index >= sec.slots.length) return;
+    final slots = List<GridSlot>.from(sec.slots);
+    slots[index] = slots[index].copyWith(motifId: motifId, clearMotif: motifId == null);
+    _updateCurrentSection(sec.copyWith(slots: slots));
+  }
+
+  void duplicateFreeformSlot(int index) {
+    if (_project == null || currentSection == null) return;
+    final sec = currentSection!;
+    if (index < 0 || index >= sec.slots.length) return;
+    final source = sec.slots[index];
+    final slots = List<GridSlot>.from(sec.slots);
+    slots.add(GridSlot(
+      row: slots.length,
+      col: 0,
+      motifId: source.motifId,
+      posX: (source.posX ?? 100.0) + 30.0,
+      posY: (source.posY ?? 100.0) + 30.0,
+    ));
+    _updateCurrentSection(sec.copyWith(slots: slots));
+  }
+
+  void deleteFreeformSlot(int index) {
+    if (_project == null || currentSection == null) return;
+    final sec = currentSection!;
+    if (index < 0 || index >= sec.slots.length) return;
+    final slots = List<GridSlot>.from(sec.slots)..removeAt(index);
+    _updateCurrentSection(sec.copyWith(slots: slots));
+  }
 }
+

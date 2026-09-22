@@ -21,6 +21,7 @@ class MotifDesignerDialog extends StatefulWidget {
 class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
   late TextEditingController _nameController;
   late MotifType _selectedType;
+  late MotifShape _selectedShape;
   late List<YarnColor> _rounds;
   int _activeRoundIndex = 0;
 
@@ -31,10 +32,12 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
     if (initial != null) {
       _nameController = TextEditingController(text: initial.name);
       _selectedType = initial.type;
+      _selectedShape = initial.shape;
       _rounds = List.from(initial.rounds);
     } else {
       _nameController = TextEditingController(text: 'Özel Motif / Custom Motif');
       _selectedType = MotifType.classicGranny;
+      _selectedShape = MotifShape.square;
       _rounds = [
         YarnColor.defaultPalette.firstWhere((c) => c.id == 'mustard'),
         YarnColor.defaultPalette.firstWhere((c) => c.id == 'terracotta'),
@@ -164,6 +167,7 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
         id: widget.initialMotif?.id ?? 'temp_id',
         name: _nameController.text.trim(),
         type: _selectedType,
+        shape: _selectedShape,
         rounds: _rounds,
       );
 
@@ -244,6 +248,44 @@ class _MotifDesignerDialogState extends State<MotifDesignerDialog> {
                         onSelectionChanged: (newSelection) {
                           setState(() {
                             _selectedType = newSelection.first;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Motif Shape Selector (Square, Hexagon, Pentagon, Triangle)
+                      Text(
+                        t('motif_shape'),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedButton<MotifShape>(
+                        segments: const [
+                          ButtonSegment(
+                            value: MotifShape.square,
+                            label: Text('Kare'),
+                            icon: Icon(Icons.crop_square, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: MotifShape.hexagon,
+                            label: Text('Altıgen'),
+                            icon: Icon(Icons.hexagon_outlined, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: MotifShape.pentagon,
+                            label: Text('Beşgen'),
+                            icon: Icon(Icons.pentagon_outlined, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: MotifShape.triangle,
+                            label: Text('Üçgen'),
+                            icon: Icon(Icons.change_history, size: 18),
+                          ),
+                        ],
+                        selected: {_selectedShape},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            _selectedShape = newSelection.first;
                           });
                         },
                       ),

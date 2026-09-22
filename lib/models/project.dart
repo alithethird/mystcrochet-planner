@@ -6,6 +6,7 @@ enum ProjectType {
   sweater,
   toteBag,
   custom,
+  freeform,
 }
 
 extension ProjectTypeExtension on ProjectType {
@@ -19,6 +20,8 @@ extension ProjectTypeExtension on ProjectType {
         return t('template_tote_title');
       case ProjectType.custom:
         return t('template_custom_title');
+      case ProjectType.freeform:
+        return t('template_freeform_title');
     }
   }
 
@@ -32,6 +35,8 @@ extension ProjectTypeExtension on ProjectType {
         return 'shopping_bag';
       case ProjectType.custom:
         return 'grid_on';
+      case ProjectType.freeform:
+        return 'design_services';
     }
   }
 }
@@ -41,12 +46,16 @@ class GridSlot {
   final int col;
   final String? motifId;
   final bool isActive;
+  final double? posX;
+  final double? posY;
 
   const GridSlot({
     required this.row,
     required this.col,
     this.motifId,
     this.isActive = true,
+    this.posX,
+    this.posY,
   });
 
   GridSlot copyWith({
@@ -54,6 +63,8 @@ class GridSlot {
     int? col,
     String? motifId,
     bool? isActive,
+    double? posX,
+    double? posY,
     bool clearMotif = false,
   }) {
     return GridSlot(
@@ -61,6 +72,8 @@ class GridSlot {
       col: col ?? this.col,
       motifId: clearMotif ? null : (motifId ?? this.motifId),
       isActive: isActive ?? this.isActive,
+      posX: posX ?? this.posX,
+      posY: posY ?? this.posY,
     );
   }
 
@@ -69,6 +82,8 @@ class GridSlot {
         'col': col,
         'motifId': motifId,
         'isActive': isActive,
+        'posX': posX,
+        'posY': posY,
       };
 
   factory GridSlot.fromJson(Map<String, dynamic> json) => GridSlot(
@@ -76,6 +91,8 @@ class GridSlot {
         col: (json['col'] as num).toInt(),
         motifId: json['motifId'] as String?,
         isActive: json['isActive'] as bool? ?? true,
+        posX: (json['posX'] as num?)?.toDouble(),
+        posY: (json['posY'] as num?)?.toDouble(),
       );
 }
 
@@ -85,6 +102,7 @@ class ProjectSection {
   final int rows;
   final int cols;
   final List<GridSlot> slots;
+  final bool isFreeform;
 
   const ProjectSection({
     required this.id,
@@ -92,6 +110,7 @@ class ProjectSection {
     required this.rows,
     required this.cols,
     required this.slots,
+    this.isFreeform = false,
   });
 
   ProjectSection copyWith({
@@ -100,6 +119,7 @@ class ProjectSection {
     int? rows,
     int? cols,
     List<GridSlot>? slots,
+    bool? isFreeform,
   }) {
     return ProjectSection(
       id: id ?? this.id,
@@ -107,6 +127,7 @@ class ProjectSection {
       rows: rows ?? this.rows,
       cols: cols ?? this.cols,
       slots: slots ?? this.slots,
+      isFreeform: isFreeform ?? this.isFreeform,
     );
   }
 
@@ -119,6 +140,7 @@ class ProjectSection {
       'blanket' || 'main_grid' => 'section_blanket',
       'tote' || 'tote_layout' => 'section_tote',
       'custom' || 'custom_grid' => 'section_custom',
+      'freeform_canvas' || 'freeform' => 'template_freeform_title',
       _ => 'section_$id',
     };
     final translated = LocalizationService().tr(key);
@@ -157,6 +179,7 @@ class ProjectSection {
         'name': name,
         'rows': rows,
         'cols': cols,
+        'isFreeform': isFreeform,
         'slots': slots.map((s) => s.toJson()).toList(),
       };
 
@@ -165,6 +188,7 @@ class ProjectSection {
         name: json['name'] as String,
         rows: (json['rows'] as num).toInt(),
         cols: (json['cols'] as num).toInt(),
+        isFreeform: json['isFreeform'] as bool? ?? false,
         slots: (json['slots'] as List<dynamic>)
             .map((s) => GridSlot.fromJson(s as Map<String, dynamic>))
             .toList(),
@@ -433,6 +457,31 @@ class CrochetProject {
           rows: rows,
           cols: cols,
           slots: slots,
+        ),
+      ],
+      motifs: customMotifs ?? Motif.defaultMotifs(),
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
+
+  static CrochetProject createFreeform({
+    String? name,
+    List<Motif>? customMotifs,
+  }) {
+    final now = DateTime.now();
+    return CrochetProject(
+      id: 'freeform_${now.millisecondsSinceEpoch}',
+      name: name ?? 'Serbest Form Projem',
+      type: ProjectType.freeform,
+      sections: [
+        ProjectSection(
+          id: 'freeform_canvas',
+          name: 'Serbest Tuval',
+          rows: 1,
+          cols: 1,
+          slots: const [],
+          isFreeform: true,
         ),
       ],
       motifs: customMotifs ?? Motif.defaultMotifs(),
